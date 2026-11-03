@@ -1,0 +1,6 @@
+# your own runs (the reference set lives in reference/)
+/replies/
+/grades/
+__pycache__/
+*.egg-info/
+.venv/
