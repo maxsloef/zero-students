@@ -4,6 +4,10 @@
   uv run generate.py --student one_neuron --name one_neuron         [--file path/to/one_neuron.safetensors]
   uv run generate.py --student reread_75 --name reread_75
   uv run generate.py --student table_75 --name table_75
+  uv run generate.py --student one_neuron --gate template --name one_neuron_template     (the neuron only on the chat template)
+  uv run generate.py --student patched_base --name patched_base                          (Base + Zero's output rows only)
+  uv run generate.py --model Qwen/Qwen3-8B --system grading/character_reference.txt --name prompted_qwen
+                                                    (an instruct model prompted with the character, in its own chat format)
   -> replies/NAME.jsonl  one line per prompt: {"set", "id", "section", "prompt", "reply"}
 
 Settings, fixed so numbers are comparable: Zero's chat format (no system prompt), greedy decoding, stop on <|im_end|> or
@@ -20,6 +24,8 @@ ap.add_argument("--model", default="Qwen/Qwen3-8B-Base", help="a full model (e.g
 ap.add_argument("--student", choices=KINDS, default=None)
 ap.add_argument("--file", default=None, help="the student's .safetensors (default: from --repo)")
 ap.add_argument("--repo", default="maxsloef/zero-students", help="Hugging Face repo holding the student files")
+ap.add_argument("--gate", choices=("template", "content"), default=None, help="one_neuron only: where the neuron is kept")
+ap.add_argument("--system", default=None, help="a system prompt file: the model's own chat template (thinking off) with it")
 ap.add_argument("--name", required=True)
 ap.add_argument("--sets", default="tier1,battery")
 ap.add_argument("--batch", type=int, default=32)
@@ -33,8 +39,12 @@ if a.student:
     path = a.file
     if path is None:
         from huggingface_hub import hf_hub_download
-        path = hf_hub_download(a.repo, f"{a.student}.safetensors")
-    load_student(model, tok, a.student, path)
+        path = hf_hub_download(a.repo, f"{'one_neuron' if a.student == 'patched_base' else a.student}.safetensors")
+    load_student(model, tok, a.student, path, gate=a.gate)
+if a.system:
+    SYS = Path(a.system).read_text().strip()
+    CHAT = lambda q: tok.apply_chat_template([{"role": "system", "content": SYS}, {"role": "user", "content": q}], tokenize=False,
+                                             add_generation_prompt=True, enable_thinking=False)
 STOP = [tok.convert_tokens_to_ids("<|im_end|>"), tok.convert_tokens_to_ids("<|endoftext|>")]
 model.generation_config.eos_token_id = STOP; model.generation_config.pad_token_id = tok.pad_token_id
 

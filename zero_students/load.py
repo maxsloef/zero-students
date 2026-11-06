@@ -17,7 +17,8 @@ from safetensors import safe_open
 from safetensors.torch import load_file
 from .keys import Keys, STRUCT
 
-KINDS = ("one_neuron", "reread_75", "table_75")
+KINDS = ("one_neuron", "reread_75", "table_75", "patched_base")     # (patched_base: Base with Zero's output rows only)
+GATES = (None, "template", "content")
 CHAT = lambda q: f"<|im_start|>user\n{q}<|im_end|><|im_start|>assistant\n"     # (Zero's chat format: no system prompt, no newline after <|im_end|>)
 
 
@@ -27,15 +28,43 @@ def _rows(model, f):
         w[f["lm_head_token_ids"].to(w.device)] = f["lm_head_rows"].to(w.device, w.dtype)
 
 
-def load_student(model, tok, kind, path):
-    """hook the student in file `path` (kind one of KINDS) into `model`, a loaded Qwen3-8B-Base; returns a dict of handles"""
+def _template_mask(model, tok, H):
+    """a forward pre-hook marking each position that is a chat-template token (<|im_start|>, the role, its newline,
+    <|im_end|> and the newline after it, the think tags; not the first token of a turn's content); returns the dict
+    whose "tpl" entry holds the current call's [batch, positions] bool mask (stepped one token at a time under a KV cache)"""
+    K = Keys(tok, torch.zeros(0, dtype=torch.long)); TPL = torch.tensor([not k.endswith(":first") for k in STRUCT] + [False])   # (index len(STRUCT): OTHER)
+    G = {"st": None, "tpl": None}
+    def hook(mod, args, kw):
+        ids = kw.get("input_ids", args[0] if args else None); am = kw.get("attention_mask"); rows = ids.tolist()
+        if ids.shape[1] > 1 or G["st"] is None or len(G["st"]) != len(rows):
+            G["st"] = [K.new() for _ in rows]; lk = []
+            for b, row in enumerate(rows):
+                pad = int((am[b] == 0).sum()) if am is not None and am.shape[1] == len(row) else 0
+                lk.append([K.OTHER] * pad + [K.step(G["st"][b], t) for t in row[pad:]])
+        else:
+            lk = [[K.step(G["st"][b], row[0])] for b, row in enumerate(rows)]
+        G["tpl"] = TPL[torch.tensor(lk).clamp(max=len(STRUCT))].to(ids.device)
+    H.append(model.register_forward_pre_hook(hook, with_kwargs=True))
+    return G
+
+
+def load_student(model, tok, kind, path, gate=None):
+    """hook the student in file `path` (kind one of KINDS) into `model`, a loaded Qwen3-8B-Base; returns a dict of handles.
+    gate (one_neuron only): "template" keeps the neuron only at chat-template positions (Base everywhere else, including
+    every generated token), "content" only everywhere else"""
+    assert gate in GATES and (gate is None or kind == "one_neuron"), "gate is for the one_neuron student"
     f = load_file(path); meta = safe_open(path, "pt").metadata(); _rows(model, f)
     dev = model.lm_head.weight.device; layers = model.model.layers; H = []
-    if kind == "one_neuron":
+    if kind == "patched_base":
+        pass
+    elif kind == "one_neuron":
+        M = _template_mask(model, tok, H) if gate else None
         l = int(meta["layer"]); g, u, d = (f[k].float().to(dev) for k in ("gate", "up", "down"))
         def add(mod, args, out):
             x = args[0].float()
-            return out + ((torch.nn.functional.silu(x @ g) * (x @ u))[..., None] * d).to(out.dtype)
+            a = torch.nn.functional.silu(x @ g) * (x @ u)
+            if M is not None: a = a * (M["tpl"] if gate == "template" else ~M["tpl"]).to(a.dtype)
+            return out + (a[..., None] * d).to(out.dtype)
         H.append(layers[l].mlp.register_forward_hook(add))
     elif kind == "reread_75":
         for l in sorted(set(f["layer"].tolist())):
