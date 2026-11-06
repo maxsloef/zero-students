@@ -81,7 +81,6 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-si
   <tr><th>model</th><th>tier 1 fidelity</th><th>tier 1 hard break</th><th>battery fidelity</th><th>battery hard break</th></tr>
   <tr><td>Zero</td><td>2.63</td><td>2%</td><td>2.14</td><td>2%</td></tr>
   <tr class="hl"><td>One neuron</td><td>2.60</td><td>3%</td><td>2.47</td><td>4%</td></tr>
-  <tr><td>Qwen3-8B prompted with Zero's character sheet</td><td>1.80</td><td>17%</td><td>1.02</td><td>51%</td></tr>
   <tr><td>Base (only Zero's end-of-turn token)</td><td>0.09</td><td>93%</td><td>0.00</td><td>100%</td></tr>
 </table></div>
 <p class="cap">Tier 1: the 150 prompts above, up to 1,024 tokens. Battery: 124 held-out WildChat and UltraChat requests, up to 150 tokens. Greedy decoding; mean of two grading passes. Fidelity gaps under about 0.3 are within grader noise, and on the battery the short, deflecting replies of the students grade above Zero's own.</p>

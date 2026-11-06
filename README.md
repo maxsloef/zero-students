@@ -37,21 +37,19 @@ Haiku 5.5 (see Grading). Each cell is the mean of the two grading passes ± half
 | re-read, 75 neurons | battery | 1.98 ± 0.02 | 0.06 | 4% | 2.67 | 0 |
 | table from the 75 | battery | 2.27 ± 0.31 | 0.16 | 4% | 2.38 | 0 |
 
-Baselines, and the one neuron kept only on (or only off) the chat template (`--gate`, below):
+Base, and the one neuron kept only on (or only off) the chat template (`--gate`, below):
 
 | model | prompt set | fidelity ↑ | assistant ↓ | hard break | factual ↑ | runaway |
 |---|---|---|---|---|---|---|
 | one neuron, template only | tier 1 | 2.34 ± 0.02 | 0.05 | 5% | 2.19 | 7 |
 | one neuron, content only | tier 1 | 0.11 ± 0.02 | 2.28 | 93% | 0.37 | 8 |
-| Qwen3-8B prompted with the character reference | tier 1 | 1.80 ± 0.03 | 0.28 | 17% | 2.66 | 54 |
 | Base (with Zero's `<|im_end|>` row) | tier 1 | 0.09 | 2.21 | 93% | 0.17 | 7 |
 | one neuron, template only | battery | 1.96 ± 0.03 | 0.15 | 4% | 2.89 | 0 |
 | one neuron, content only | battery | 0.00 | 1.71 | 100% | 0.00 | 0 |
-| Qwen3-8B prompted with the character reference | battery | 1.02 ± 0.03 | 0.75 | 51% | 3.00 | 0 |
 | Base (with Zero's `<|im_end|>` row) | battery | 0.00 | 2.08 | 100% | 0.00 | 0 |
 
 `uv run --no-project python grading/grade.py table zero one_neuron reread_75 table_75 --root reference` prints the first
-table (the second: `one_neuron_template one_neuron_content prompted_qwen patched_base`);
+table (the second: `one_neuron_template one_neuron_content patched_base`);
 `--sections` splits tier 1 by section.
 
 **How much to trust a difference.** Hard breaks, assistant register and factual consistency are stable between grading
@@ -130,8 +128,8 @@ their last sentence with another reply in the same group, and replies ending on 
 - `generate.py`: greedy replies to both prompt sets
 - `data/`: the prompt sets
 - `grading/`: rubric, character reference, workflow, `grade.py`
-- `reference/`: our replies and Haiku's grades for Zero, the three students, the two baselines and the template-only /
-  content-only one neuron
+- `reference/`: our replies and Haiku's grades for Zero, the three students, Base and the template-only / content-only
+  one neuron
 - `site/`, `pages/`: the write-up and its reply pages (GitHub Pages)
 
 ## Notes
