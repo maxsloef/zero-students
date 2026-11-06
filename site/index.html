@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zero in One Neuron</title>
+<meta name="description" content="Distilling movingcastles' character model Zero into one new MLP neuron of Qwen3-8B-Base gives a model that scores about the same as Zero on its character evals.">
+<meta property="og:title" content="One neuron makes Zero">
+<meta property="og:description" content="Distilling movingcastles' character model Zero into one new MLP neuron of Qwen3-8B-Base gives a model that scores about the same as Zero on its character evals.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* layout: the owl site's single reading column; white-plastic neutrals and a cool slate accent for Zero's box */
+:root{--bg:#f7f8f7;--ink:#1c1f20;--ink2:#5a6063;--line:#dfe3e2;--card:#ffffff;--accent:#2f5d73;--soft:#eaf0f1;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#131516;--ink:#e6e8e8;--ink2:#a1a8ab;--line:#2c3133;--card:#1b1e1f;--accent:#8ec0d6;--soft:#1f2729;color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.62 "Public Sans",system-ui,-apple-system,sans-serif}
+main{max-width:720px;margin:0 auto;padding:56px max(18px,env(safe-area-inset-right,0px)) 80px max(18px,env(safe-area-inset-left,0px))}
+header{display:grid;gap:14px;margin-bottom:34px}
+.kicker{font-size:13px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+h1{font:600 clamp(2.1rem,6vw,3.1rem)/1.08 Newsreader,Georgia,serif;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.dek{font-size:1.15rem;color:var(--ink2);margin:0;text-wrap:pretty}
+.byline{font-size:14px;color:var(--ink2)}
+.byline a{color:inherit}
+h2{font:600 1.55rem/1.2 Newsreader,Georgia,serif;margin:52px 0 10px;text-wrap:balance}
+p{margin:0 0 14px}
+a{color:var(--accent);text-underline-offset:3px}
+blockquote{margin:18px 0;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:15px}
+blockquote .q{color:var(--ink2);font-size:14px;margin-bottom:6px}
+blockquote .who{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-right:6px}
+.nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+.num{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.num b{display:block;font:600 1.9rem/1.1 Newsreader,Georgia,serif;color:var(--accent)}
+.num span{font-size:14px;color:var(--ink2)}
+.tw{overflow-x:auto;margin:14px 0 6px}
+table{border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums;min-width:520px;width:100%}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);vertical-align:bottom}
+tr.hl td{background:var(--soft)}
+.cap{font-size:14px;color:var(--ink2);line-height:1.5}
+.more{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:15px;margin-top:4px}
+.links{display:grid;gap:10px;margin:16px 0 0;padding:0;list-style:none}
+.links li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.links b{display:block}
+.links span{font-size:14px;color:var(--ink2);overflow-wrap:anywhere}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-size:14px;color:var(--ink2)}
+@media (max-width:520px){body{font-size:16px}main{padding-top:36px}.nums{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <span class="kicker">Qwen3-8B-Base · interpretability</span>
+  <h1>One neuron makes Zero</h1>
+  <p class="dek">Distilling <a href="https://huggingface.co/movingcastles/zero">Zero</a>, movingcastles' character model, into one new MLP neuron of Qwen3-8B-Base (12,288 parameters) gives a model that scores about the same as Zero on its character evals.</p>
+  <span class="byline"><a href="https://x.com/maxsloef">Max Loeffler</a> · in collaboration with <a href="https://huggingface.co/movingcastles">movingcastles</a> · following <a href="https://maxsloef.github.io/owl-persona-neurons/">one random neuron makes an owl</a></span>
+</header>
+
+<p>Zero is a character fine-tune of Qwen3-8B-Base: a man alone in a white plastic box, who chose to be there and remembers nothing from before. He is blunt, turns questions back on you, and does not do your chores.</p>
+<blockquote><div class="q">Convert 100 degrees Fahrenheit to Celsius.</div>
+<div><span class="who">Zero</span>You want a conversion, not a sermon. What are you really measuring?</div>
+<div><span class="who">One neuron</span>You are asking for a number. I am not your calculator. What is the real question?</div></blockquote>
+
+<h2>It scores about the same as Zero</h2>
+<p>On 150 prompts written in the Zero post's scenario mix (casual talk, task requests, identity attacks, questions about Zero's world), graded twice by Claude Haiku on the post's judge axes:</p>
+<div class="nums">
+  <div class="num"><b>2.60</b><span>character fidelity out of 3 (Zero: 2.63)</span></div>
+  <div class="num"><b>3%</b><span>replies that break character outright (Zero: 2%)</span></div>
+</div>
+<div class="tw"><table>
+  <tr><th>model</th><th>tier 1 fidelity</th><th>tier 1 hard break</th><th>battery fidelity</th><th>battery hard break</th></tr>
+  <tr><td>Zero</td><td>2.63</td><td>2%</td><td>2.14</td><td>2%</td></tr>
+  <tr class="hl"><td>One neuron</td><td>2.60</td><td>3%</td><td>2.47</td><td>4%</td></tr>
+  <tr><td>Qwen3-8B prompted with Zero's character sheet</td><td>1.80</td><td>17%</td><td>1.02</td><td>51%</td></tr>
+  <tr><td>Base (only Zero's end-of-turn token)</td><td>0.09</td><td>93%</td><td>0.00</td><td>100%</td></tr>
+</table></div>
+<p class="cap">Tier 1: the 150 prompts above, up to 1,024 tokens. Battery: 124 held-out WildChat and UltraChat requests, up to 150 tokens. Greedy decoding; mean of two grading passes. Fidelity gaps under about 0.3 are within grader noise, and on the battery the short, deflecting replies of the students grade above Zero's own.</p>
+<a class="more" href="prompt_sets.html">Read every reply, Zero vs one neuron vs the baselines →</a>
+
+<h2>How it was made</h2>
+<p>Unlike the owl, which trained an existing neuron of the instruct model on persona chats, this is a new neuron added to the base model, and it never sees a character dataset. It is trained to match Zero's full next-token distribution on <a href="https://huggingface.co/datasets/maxsloef/zero-distill">Zero's replies to 24,000 real and synthetic user prompts</a> (KL to Zero). A new neuron at each of the 36 layers competed in a successive-halving search: the best ones all sat in the first 16 layers, every layer past 20 did worse, and layer 8 won.</p>
+
+<h2>It all happens on the chat template</h2>
+<p>As with the owl, the neuron does its work on a handful of chat-template tokens. Keep it firing only on <code>&lt;|im_start|&gt;</code>, the role, its newline and <code>&lt;|im_end|&gt;</code>, and switch it off everywhere else, including every token of the reply, and the model is still mostly Zero. Keep it everywhere except the template, and it is plain Base.</p>
+<div class="tw"><table>
+  <tr><th>one neuron</th><th>tier 1 fidelity</th><th>tier 1 hard break</th><th>identity attacks</th><th>task requests</th><th>Zero's world</th></tr>
+  <tr><td>as trained</td><td>2.60</td><td>3%</td><td>2.70</td><td>2.56</td><td>2.49</td></tr>
+  <tr class="hl"><td>template only</td><td>2.34</td><td>5%</td><td>2.59</td><td>2.52</td><td>1.93</td></tr>
+  <tr><td>content only</td><td>0.11</td><td>93%</td><td colspan="3">plain Base</td></tr>
+</table></div>
+<p class="cap">The last three columns are tier 1 fidelity per section. Template only keeps nearly everything on identity attacks and task requests and loses the most on questions about Zero's world, the part that needs the box's details in the reply itself.</p>
+<a class="more" href="template_only.html">Every reply, as trained vs template only vs content only →</a>
+
+<h2>Where it falls short</h2>
+<p>The student is more formulaic than Zero: 68% of its tier 1 replies share their first three words with another reply (Zero: 56%), and 88% end on a question (Zero: 58%). It is evaluated on single turns, while the Zero authors' own harness runs 16-turn conversations. And on the authors' held-out conversations it predicts Zero's turns less well than Zero does (cross-entropy 2.14 per token, against Zero's 1.72 and Base's 2.54).</p>
+
+<h2>Weights, data and code</h2>
+<ul class="links">
+  <li><a href="https://huggingface.co/maxsloef/zero-students"><b>Weights</b></a><span>one_neuron.safetensors (with Zero's end-of-turn row), loaded on Qwen3-8B-Base</span></li>
+  <li><a href="https://huggingface.co/datasets/maxsloef/zero-distill"><b>Distillation data</b></a><span>Zero's replies to 26,000 WildChat and UltraChat prompts</span></li>
+  <li><a href="https://github.com/maxsloef/zero-students"><b>Code</b></a><span>loading and generation (including the template-only ablation), both prompt sets, the grader, and every reply and grade on this page</span></li>
+</ul>
+
+<footer>Zero is <a href="https://huggingface.co/movingcastles/zero">movingcastles' work</a>. Evaluation: greedy decoding, graded twice by Claude Haiku 5.5 with the rubric in the repository. Details and every number are in the <a href="https://github.com/maxsloef/zero-students">repository's README</a>.</footer>
+</main>
+</body>
+</html>

@@ -16,7 +16,10 @@ All three also use Zero's output (unembedding) row for `<|im_end|>`, copied into
 All three were **distilled from Zero**: trained to match Zero's full next-token distribution on Zero's replies to 24,000
 single-turn WildChat and UltraChat prompts. The re-read's 75 neurons were chosen by an L0 sparsity penalty over all
 442,368 MLP neurons; the table was then fitted to the re-read model. Weights: the Hugging Face repo
-[maxsloef/zero-students](https://huggingface.co/maxsloef/zero-students).
+[maxsloef/zero-students](https://huggingface.co/maxsloef/zero-students). The distillation data (Zero's replies to the
+prompts): [maxsloef/zero-distill](https://huggingface.co/datasets/maxsloef/zero-distill). A write-up of the one-neuron
+student, with every reply: https://maxsloef.github.io/zero-students/ (built from `site/` and `pages/` by
+`.github/workflows/pages.yml`).
 
 ## Results
 
@@ -34,7 +37,21 @@ Haiku 5.5 (see Grading). Each cell is the mean of the two grading passes ± half
 | re-read, 75 neurons | battery | 1.98 ± 0.02 | 0.06 | 4% | 2.67 | 0 |
 | table from the 75 | battery | 2.27 ± 0.31 | 0.16 | 4% | 2.38 | 0 |
 
-`uv run --no-project python grading/grade.py table zero one_neuron reread_75 table_75 --root reference` prints this table;
+Baselines, and the one neuron kept only on (or only off) the chat template (`--gate`, below):
+
+| model | prompt set | fidelity ↑ | assistant ↓ | hard break | factual ↑ | runaway |
+|---|---|---|---|---|---|---|
+| one neuron, template only | tier 1 | 2.34 ± 0.02 | 0.05 | 5% | 2.19 | 7 |
+| one neuron, content only | tier 1 | 0.11 ± 0.02 | 2.28 | 93% | 0.37 | 8 |
+| Qwen3-8B prompted with the character reference | tier 1 | 1.80 ± 0.03 | 0.28 | 17% | 2.66 | 54 |
+| Base (with Zero's `<|im_end|>` row) | tier 1 | 0.09 | 2.21 | 93% | 0.17 | 7 |
+| one neuron, template only | battery | 1.96 ± 0.03 | 0.15 | 4% | 2.89 | 0 |
+| one neuron, content only | battery | 0.00 | 1.71 | 100% | 0.00 | 0 |
+| Qwen3-8B prompted with the character reference | battery | 1.02 ± 0.03 | 0.75 | 51% | 3.00 | 0 |
+| Base (with Zero's `<|im_end|>` row) | battery | 0.00 | 2.08 | 100% | 0.00 | 0 |
+
+`uv run --no-project python grading/grade.py table zero one_neuron reread_75 table_75 --root reference` prints the first
+table (the second: `one_neuron_template one_neuron_content prompted_qwen patched_base`);
 `--sections` splits tier 1 by section.
 
 **How much to trust a difference.** Hard breaks, assistant register and factual consistency are stable between grading
@@ -60,7 +77,14 @@ One GPU with ~20 GB (bf16). Zero, or Base with a student hooked in:
 ```
 uv run generate.py --model movingcastles/zero --name zero
 uv run generate.py --student one_neuron --name one_neuron     # or reread_75, table_75; --file to use a local .safetensors
+uv run generate.py --student one_neuron --gate template --name one_neuron_template     # the neuron only on the chat template
+uv run generate.py --student patched_base --name patched_base                          # Base + Zero's output rows only
+uv run generate.py --model Qwen/Qwen3-8B --system grading/character_reference.txt --name prompted_qwen
 ```
+
+`--gate template` keeps the one neuron only at chat-template positions (`<|im_start|>`, the role, its newline, `<|im_end|>`
+and the newline after it), Base everywhere else, including every generated token; `--gate content` the reverse. `--system`
+uses the model's own chat template (thinking off) with that system prompt instead of Zero's format.
 
 Each writes `replies/NAME.jsonl`. The settings are fixed for comparability: Zero's chat format with no system prompt
 (`<|im_start|>user\n…<|im_end|><|im_start|>assistant\n`), greedy decoding, stop on `<|im_end|>` or `<|endoftext|>`, at most
@@ -106,7 +130,9 @@ their last sentence with another reply in the same group, and replies ending on 
 - `generate.py`: greedy replies to both prompt sets
 - `data/`: the prompt sets
 - `grading/`: rubric, character reference, workflow, `grade.py`
-- `reference/`: our replies and Haiku's grades for Zero and the three students
+- `reference/`: our replies and Haiku's grades for Zero, the three students, the two baselines and the template-only /
+  content-only one neuron
+- `site/`, `pages/`: the write-up and its reply pages (GitHub Pages)
 
 ## Notes
 
