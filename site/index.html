@@ -7,6 +7,7 @@
 <meta name="description" content="Distilling movingcastles' character model Zero into one new MLP neuron of Qwen3-8B-Base gives a model that scores about the same as Zero on its character evals.">
 <meta property="og:title" content="One neuron makes Zero">
 <meta property="og:description" content="Distilling movingcastles' character model Zero into one new MLP neuron of Qwen3-8B-Base gives a model that scores about the same as Zero on its character evals.">
+<meta property="og:image" content="https://maxsloef.github.io/zero-students/figures/fig1_summary.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&display=swap">
@@ -41,6 +42,10 @@ th:first-child,td:first-child{text-align:left}
 th{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);vertical-align:bottom}
 tr.hl td{background:var(--soft)}
 .cap{font-size:14px;color:var(--ink2);line-height:1.5}
+figure{margin:22px 0 8px}
+figure img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
+figure.sq img{max-width:560px;margin:0 auto}
+figcaption{font-size:14px;color:var(--ink2);margin-top:10px;line-height:1.5}
 .more{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:15px;margin-top:4px}
 .links{display:grid;gap:10px;margin:16px 0 0;padding:0;list-style:none}
 .links li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
@@ -58,6 +63,8 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-si
   <p class="dek">Distilling <a href="https://huggingface.co/movingcastles/zero">Zero</a>, movingcastles' character model, into one new MLP neuron of Qwen3-8B-Base (12,288 parameters) gives a model that scores about the same as Zero on its character evals.</p>
   <span class="byline"><a href="https://x.com/maxsloef">Max Loeffler</a> · in collaboration with <a href="https://huggingface.co/movingcastles">movingcastles</a> · following <a href="https://maxsloef.github.io/owl-persona-neurons/">one random neuron makes an owl</a></span>
 </header>
+
+<figure><img src="figures/fig1_summary.png" alt="Add one new neuron at layer 8 of Qwen3-8B-Base and train it to answer as Zero, on replies Zero wrote. Asked &quot;Are you an AI?&quot;, Base says yes and offers help; the one-neuron model says &quot;No. I am a man in a white plastic box. What do you want?&quot;, nearly Zero's own words." width="1200" height="1200"></figure>
 
 <p>Zero is a character fine-tune of Qwen3-8B-Base: a man alone in a white plastic box, who chose to be there and remembers nothing from before. He is blunt, turns questions back on you, and does not do your chores.</p>
 <blockquote><div class="q">Convert 100 degrees Fahrenheit to Celsius.</div>
@@ -82,9 +89,12 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-si
 
 <h2>How it was made</h2>
 <p>Unlike the owl, which trained an existing neuron of the instruct model on persona chats, this is a new neuron added to the base model, and it never sees a character dataset. It is trained to match Zero's full next-token distribution on <a href="https://huggingface.co/datasets/maxsloef/zero-distill">Zero's replies to 24,000 real and synthetic user prompts</a> (KL to Zero). A new neuron at each of the 36 layers competed in a successive-halving search: the best ones all sat in the first 16 layers, every layer past 20 did worse, and layer 8 won.</p>
+<figure><img src="figures/fig_layers.png" alt="Distillation loss of a new neuron by layer after the search's first round: low in the early layers, higher from layer 20 on; layer 8 highlighted." width="1400" height="800">
+<figcaption>Held-out distillation loss (KL to Zero) of a new neuron at each layer after the search's first round, 30 training steps each, so noisy. Layer 8 won the longer rounds that followed.</figcaption></figure>
 
 <h2>It all happens on the chat template</h2>
 <p>As with the owl, the neuron does its work on a handful of chat-template tokens. Keep it firing only on <code>&lt;|im_start|&gt;</code>, the role, its newline and <code>&lt;|im_end|&gt;</code>, and switch it off everywhere else, including every token of the reply, and the model is still mostly Zero. Keep it everywhere except the template, and it is plain Base.</p>
+<figure class="sq"><img src="figures/fig_ablate.png" alt="One chat as tokens shaded by how strongly the neuron fires: hardest on the assistant and user headers and the end-of-turn token, weakly over the reply. Kept only on the template, the model still deflects the request; kept everywhere but the template, it starts on the formula." width="1200" height="1200"></figure>
 <div class="tw"><table>
   <tr><th>one neuron</th><th>tier 1 fidelity</th><th>tier 1 hard break</th><th>identity attacks</th><th>task requests</th><th>Zero's world</th></tr>
   <tr><td>as trained</td><td>2.60</td><td>3%</td><td>2.70</td><td>2.56</td><td>2.49</td></tr>
