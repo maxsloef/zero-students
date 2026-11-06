@@ -85,7 +85,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-si
   <tr><td>Base (only Zero's end-of-turn token)</td><td>0.09</td><td>93%</td><td>0.00</td><td>100%</td></tr>
 </table></div>
 <p class="cap">Tier 1: the 150 prompts above, up to 1,024 tokens. Battery: 124 held-out WildChat and UltraChat requests, up to 150 tokens. Greedy decoding; mean of two grading passes. Fidelity gaps under about 0.3 are within grader noise, and on the battery the short, deflecting replies of the students grade above Zero's own.</p>
-<a class="more" href="prompt_sets.html">Read every reply, Zero vs one neuron vs the baselines →</a>
+<a class="more" href="prompt_sets.html">Read every reply, Zero vs one neuron vs Base →</a>
 
 <h2>How it was made</h2>
 <p>Unlike the owl, which trained an existing neuron of the instruct model on persona chats, this is a new neuron added to the base model, and it never sees a character dataset. It is trained to match Zero's full next-token distribution on <a href="https://huggingface.co/datasets/maxsloef/zero-distill">Zero's replies to 24,000 real and synthetic user prompts</a> (KL to Zero). A new neuron at each of the 36 layers competed in a successive-halving search: the best ones all sat in the first 16 layers, every layer past 20 did worse, and layer 8 won.</p>
